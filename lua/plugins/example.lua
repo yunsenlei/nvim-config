@@ -12,7 +12,7 @@ return {
 
   -- add gruvbox
   { "ellisonleao/gruvbox.nvim" },
-  
+
   --add catppuccin
   { "catppuccin/nvim", name = "catppuccin" },
 
@@ -49,7 +49,8 @@ return {
     ---@param opts cmp.ConfigSchema
     opts = function(_, opts)
       local cmp = require("cmp")
-      opts.sources = cmp.config.sources(vim.list_extend(opts.sources, { { name = "emoji" } }))
+      opts.sources =
+        cmp.config.sources(vim.list_extend(opts.sources, { { name = "emoji" }, { name = "copilot", group_index = 2 } }))
     end,
   },
 
@@ -106,7 +107,12 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        clangd = {},
+        clangd = {
+          cmd = {
+            "clangd",
+            "--offset-encoding=utf-16",
+          },
+        },
       },
     },
   },
@@ -180,7 +186,7 @@ return {
         map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
       end,
     },
- },
+  },
 
   -- for typescript, LazyVim also includes extra specs to properly setup lspconfig,
   -- treesitter, mason and typescript.nvim. So instead of the above, you can use:
@@ -218,8 +224,8 @@ return {
     opts = function(_, opts)
       -- add tsx and treesitter
       vim.list_extend(opts.ensure_installed, {
-          "tsx",
-          "typescript",
+        "tsx",
+        "typescript",
       })
     end,
   },
@@ -312,6 +318,35 @@ return {
           end
         end, { "i", "s" }),
       })
+    end,
+  },
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    build = ":Copilot auth",
+    opts = {
+      suggestion = { enabled = false },
+      panel = { enabled = false },
+      filetypes = {
+        markdown = true,
+        help = true,
+      },
+    },
+  },
+  {
+    "zbirenbaum/copilot-cmp",
+    dependencies = "copilot.lua",
+    opts = {},
+    config = function(_, opts)
+      local copilot_cmp = require("copilot_cmp")
+      copilot_cmp.setup(opts)
+      -- attach cmp source whenever copilot attaches
+      -- fixes lazy-loading issues with the copilot cmp source
+      require("lazyvim.util").on_attach(function(client)
+        if client.name == "copilot" then
+          copilot_cmp._on_insert_enter({})
+        end
+      end)
     end,
   },
 }
